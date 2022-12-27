@@ -3,7 +3,7 @@
 
 # @egomobile/http-supertest
 
-> Sets up common and powerful test event listener for @egomobile/http-server with supertest under the hood.
+> Sets up common and powerful test event listener for [@egomobile/http-server](https://github.com/egomobile/node-http-server) with supertest under the hood.
 
 <a name="toc"></a>
 
