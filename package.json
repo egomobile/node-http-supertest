@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-supertest",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Sets up common and powerful test event listener for @egomobile/http-server with supertest under the hood.",
     "main": "lib/index.js",
     "engines": {
@@ -19,6 +19,22 @@
         "url": "git+https://github.com/egomobile/node-http-supertest.git"
     },
     "keywords": [
+        "http server",
+        "rest",
+        "api",
+        "event driven",
+        "unit testing",
+        "supertest",
+        "query",
+        "parameter",
+        "body",
+        "header",
+        "regexp",
+        "string",
+        "binary",
+        "function",
+        "validator",
+        "validation",
         "ego"
     ],
     "author": "Next.e.GO Mobile SE, Aachen, Germany",
