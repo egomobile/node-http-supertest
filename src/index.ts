@@ -199,6 +199,21 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
                         }
                     }
                 }
+                else if (typeof expectedBody === "object") {
+                    // JSON object
+
+                    const actualObject = JSON.parse(
+                        actualBody.toString("utf8")
+                    );
+
+                    assert.deepStrictEqual(
+                        actualObject, expectedBody,
+                        `Expected object '${JSON.stringify(expectedBody)}', but got '${JSON.stringify(actualObject)}'`
+                    );
+                }
+                else {
+                    throw new TypeError("Type of expected body is not supported");
+                }
             }
 
             spinner.succeed(`${baseText} (${end.valueOf() - start.valueOf()}ms)`);
