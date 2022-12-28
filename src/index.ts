@@ -73,6 +73,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
 
         const {
             body,
+            countFailure,
             description,
             escapedQuery,
             escapedRoute,
@@ -223,6 +224,8 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             end = new Date();
 
             spinner.fail(`[FAILED] ${baseText} (${end.valueOf() - start.valueOf()}ms): '${error}'`);
+
+            await countFailure();
         }
     });
 }
