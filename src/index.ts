@@ -79,6 +79,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             escapedRoute,
             expectations,
             group,
+            headers,
             httpMethod
         } = context;
         const {
@@ -98,6 +99,11 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
                 .parse(binaryParser({
                     "encoding": binaryParserEncoding
                 }));
+
+            // set request headers
+            for (const [headerName, headerValue] of Object.entries(headers)) {
+                request = request.set(headerName, headerValue);
+            }
 
             start = new Date();
             const response = await request.send(isNil(body) ? undefined : body);
