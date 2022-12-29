@@ -267,7 +267,9 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
 
                     const validator = asAsync(expectedBody) as BodyValueValidator;
 
-                    const result = await validator(actualBody);
+                    const result = await validator({
+                        "body": actualBody
+                    });
                     if (!isNil(result) && result !== true) {
                         const actualStr = asString(actualBody);
 
