@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { ITestEventHandlerContext } from "@egomobile/http-server";
+
 /**
  * A function to validate body.
  *
@@ -40,3 +42,13 @@ export interface IBodyValueValidatorContext {
      */
     body: Buffer;
 }
+
+/**
+ * A function, which returns the stream for a stream event.
+ *
+ * @param {ITestEventHandlerContext} context The event context.
+ *
+ * @returns {NodeJS.WriteStream|PromiseLike<NodeJS.WriteStream>} The stream to use or the promise with it.
+ */
+export type TestOutputStreamProvider =
+    (context: ITestEventHandlerContext) => NodeJS.WriteStream | PromiseLike<NodeJS.WriteStream>;

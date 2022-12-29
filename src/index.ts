@@ -15,13 +15,19 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IHttpServer } from "@egomobile/http-server";
+import type { IHttpServer, ITestSession } from "@egomobile/http-server";
 import assert, { AssertionError } from "assert";
 import ora from "ora";
+import os from "os";
 import supertest from "supertest";
-import type { BodyValueValidator } from "./types";
+import type { BodyValueValidator, TestOutputStreamProvider } from "./types";
 import type { Nilable } from "./types/internal";
 import { asAsync, asString, binaryParser, isNil } from "./utils/internal";
+
+interface ISessionInfo {
+    group?: string;
+    session: ITestSession;
+}
 
 /**
  * Options for `setupTestEventListener()` function.
@@ -34,6 +40,28 @@ export interface ISetupTestEventListenerOptions {
      * @default "binary"
      */
     binaryParserEncoding?: Nilable<BufferEncoding>;
+    /**
+     * Custom value for EOL.
+     *
+     * @default SYSTEM_EOL
+     */
+    eol?: any;
+    /**
+     * A custom function, which returns the stream for the output.
+     */
+    getStream?: Nilable<TestOutputStreamProvider>;
+    /**
+     * The prefix, when group name is printed.
+     *
+     * @default "🧪 "
+     */
+    groupPrefix?: any;
+    /**
+     * The custom indent for a test item.
+     *
+     * @default "\t"
+     */
+    itemPrefix?: any;
     /**
      * The underlying server to setup.
      */
@@ -68,6 +96,29 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
     const { server } = options;
     const binaryParserEncoding = options.binaryParserEncoding || "binary";
 
+    const eol = isNil(options.eol) ? os.EOL : options.eol;
+    const groupPrefix = isNil(options.groupPrefix) ? "🧪 " : options.groupPrefix;
+    const itemPrefix = isNil(options.itemPrefix) ? "\t" : options.itemPrefix;
+
+    let getStream: TestOutputStreamProvider;
+    if (isNil(options.getStream)) {
+        getStream = async () => {
+            return process.stderr;
+        };
+    }
+    else {
+        getStream = options.getStream;
+    }
+
+    if (typeof getStream === "function") {
+        getStream = asAsync(getStream);
+    }
+    else {
+        throw new TypeError("options.getStream must be of type function");
+    }
+
+    const currentSessions: Record<string, ISessionInfo> = {};
+
     server.on("test", async (context) => {
         const now = new Date();
 
@@ -80,7 +131,10 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             expectations,
             group,
             headers,
-            httpMethod
+            httpMethod,
+            index,
+            session,
+            totalCount
         } = context;
         const {
             "body": expectedBody,
@@ -88,9 +142,40 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             "status": expectedStatus
         } = expectations;
 
-        const baseText = `${group} >> [${httpMethod.toUpperCase()}] 'it ${description.trim()}'`;
+        const stream = await getStream(context);
+        const write = (val: any) => {
+            stream.write(asString(val));
+        };
+        const writeLine = (val: any) => {
+            write(`${asString(val)}${eol}`);
+        };
 
-        const spinner = ora(`${baseText} ...`);
+        const isLast = index === totalCount - 1;
+        const { "id": sessionId } = session;
+
+        let sessionInfo: ISessionInfo = currentSessions[sessionId];
+        if (!sessionInfo) {
+            // initialize
+
+            currentSessions[sessionId] = sessionInfo = {
+                session
+            };
+        }
+
+        const hasGroupChanged = group !== sessionInfo.group;
+
+        const baseText = `[${httpMethod.toUpperCase()}] 'it ${description.trim()}'`;
+
+        if (hasGroupChanged) {
+            sessionInfo.group = group;
+
+            writeLine(`${groupPrefix}${group}`);
+        }
+
+        const spinner = ora({
+            stream,
+            "text": `${itemPrefix}${baseText} ...`
+        });
 
         let start!: Date;
         let end!: Date;
@@ -232,6 +317,13 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             spinner.fail(`[FAILED] ${baseText} (${end.valueOf() - start.valueOf()}ms): '${error}'`);
 
             await countFailure();
+        }
+        finally {
+            if (isLast) {
+                // cleanups
+
+                delete currentSessions[sessionId];
+            }
         }
     });
 }
