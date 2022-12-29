@@ -133,6 +133,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             headers,
             httpMethod,
             index,
+            route,
             session,
             totalCount
         } = context;
@@ -164,7 +165,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
 
         const hasGroupChanged = group !== sessionInfo.group;
 
-        const baseText = `[${httpMethod.toUpperCase()}] 'it ${description.trim()}'`;
+        const baseText = `[${httpMethod.toUpperCase()} ${route}]: 'it ${description.trim()}'`;
 
         if (hasGroupChanged) {
             sessionInfo.group = group;
