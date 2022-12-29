@@ -1,10 +1,11 @@
 # Change Log (@egomobile/http-supertest)
 
-## 0.4.1
+## 0.4.2
 
 - improve output of test progress
 - add `getStream` and `groupPrefix` props to [ISetupTestEventListenerOptions interface](https://egomobile.github.io/node-http-supertest/interfaces/ISetupTestEventListenerOptions.html)
 - update to [@egomobile/http-server](https://github.com/egomobile/node-http-server) `^0.58.0`
+- (bug-)fixes
 
 ## 0.3.1
 

@@ -174,8 +174,9 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
         }
 
         const spinner = ora({
+            "prefixText": `${itemPrefix}`,
             stream,
-            "text": `${itemPrefix}${baseText} ...`
+            "text": `${baseText} ...`
         });
 
         let start!: Date;
