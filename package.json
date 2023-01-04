@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-supertest",
-    "version": "0.4.3",
+    "version": "0.4.4",
     "description": "Sets up common and powerful test event listener for @egomobile/http-server with supertest under the hood.",
     "main": "lib/index.js",
     "engines": {
@@ -49,6 +49,9 @@
         "!lib/**/setupTests.*",
         "README.md"
     ],
+    "dependencies": {
+        "ora": "5.4.1"
+    },
     "devDependencies": {
         "@egomobile/http-server": "^0.58.0",
         "@egomobile/tsconfig": "^5.0.0",
@@ -58,7 +61,6 @@
         "eslint": "8.30.0",
         "eslint-config-ego": "^0.17.1",
         "nodemon": "2.0.20",
-        "ora": "5.4.1",
         "supertest": "6.3.3",
         "ts-node": "10.9.1",
         "tslint": "6.1.3",
