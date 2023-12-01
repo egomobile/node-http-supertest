@@ -52,3 +52,12 @@ export interface IBodyValueValidatorContext {
  */
 export type TestOutputStreamProvider =
     (context: ITestEventHandlerContext) => NodeJS.WriteStream | PromiseLike<NodeJS.WriteStream>;
+
+/**
+ * A predicate, that checks, if the current test should be executed or skipped.
+ *
+ * @param {ITestEventHandlerContext} context The context.
+ *
+ * @returns {boolean|Promise<boolean>} `false`, if the current test should be skipped.
+ */
+export type TestEventHandlerPredicate = (context: ITestEventHandlerContext) => boolean | Promise<boolean>;

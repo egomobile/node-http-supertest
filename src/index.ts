@@ -16,11 +16,12 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IHttpServer, ITestSession } from "@egomobile/http-server";
-import assert, { AssertionError } from "assert";
+import assert, { AssertionError } from "node:assert";
+import os from "node:os";
 import ora from "ora";
-import os from "os";
 import supertest from "supertest";
-import type { BodyValueValidator, TestOutputStreamProvider } from "./types";
+import { createDefaultTestEventHandlerPredicate } from "./filters";
+import type { BodyValueValidator, TestEventHandlerPredicate, TestOutputStreamProvider } from "./types";
 import type { Nilable } from "./types/internal";
 import { asAsync, asString, binaryParser, isNil } from "./utils/internal";
 
@@ -46,6 +47,10 @@ export interface ISetupTestEventListenerOptions {
      * @default SYSTEM_EOL
      */
     eol?: any;
+    /**
+     * The custom test filter.
+     */
+    filter?: Nilable<TestEventHandlerPredicate>;
     /**
      * A custom function, which returns the stream for the output.
      */
@@ -110,11 +115,27 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
         getStream = options.getStream;
     }
 
+    let filter: TestEventHandlerPredicate;
+    if (isNil(options.filter)) {
+        // default, maybe by environment variable
+        filter = createDefaultTestEventHandlerPredicate();
+    }
+    else {
+        filter = options.filter;
+    }
+
     if (typeof getStream === "function") {
         getStream = asAsync(getStream);
     }
     else {
         throw new TypeError("options.getStream must be of type function");
+    }
+
+    if (typeof filter === "function") {
+        filter = asAsync(filter);
+    }
+    else {
+        throw new TypeError("options.filter must be of type function");
     }
 
     const currentSessions: Record<string, ISessionInfo> = {};
@@ -182,6 +203,13 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
         let start!: Date;
         let end!: Date;
         try {
+            const shouldBeExecuted = await filter(context);
+            if (!shouldBeExecuted) {
+                spinner.info(`[SKIPPED] ${baseText}`);
+
+                return;
+            }
+
             let request = supertest(server)[httpMethod](escapedRoute + "?" + escapedQuery)
                 .parse(binaryParser({
                     "encoding": binaryParserEncoding

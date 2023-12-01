@@ -1,10 +1,10 @@
 {
     "name": "@egomobile/http-supertest",
-    "version": "0.4.4",
+    "version": "0.5.0",
     "description": "Sets up common and powerful test event listener for @egomobile/http-server with supertest under the hood.",
     "main": "lib/index.js",
     "engines": {
-        "node": ">=16.0.0"
+        "node": ">=18.0.0"
     },
     "scripts": {
         "build": "del ./lib && tsc",
@@ -50,25 +50,25 @@
         "README.md"
     ],
     "dependencies": {
+        "filtrex": "3.0.0",
         "ora": "5.4.1"
     },
     "devDependencies": {
-        "@egomobile/http-server": "^0.58.0",
+        "@egomobile/http-server": "^0.64.2",
         "@egomobile/tsconfig": "^5.0.0",
-        "@types/node": "16.18.10",
-        "@types/supertest": "2.0.12",
-        "del-cli": "5.0.0",
-        "eslint": "8.30.0",
-        "eslint-config-ego": "^0.17.1",
-        "nodemon": "2.0.20",
+        "@types/node": "18.19.0",
+        "@types/supertest": "2.0.16",
+        "del-cli": "5.1.0",
+        "eslint": "8.54.0",
+        "eslint-config-ego": "^0.19.0",
+        "nodemon": "3.0.1",
         "supertest": "6.3.3",
         "ts-node": "10.9.1",
-        "tslint": "6.1.3",
-        "typedoc": "0.23.23",
-        "typescript": "4.6.4"
+        "typedoc": "0.25.4",
+        "typescript": "4.7.4"
     },
     "peerDependencies": {
-        "@egomobile/http-server": ">= 0.58.0",
+        "@egomobile/http-server": ">= 0.64.2",
         "supertest": ">= 6.3.3"
     }
 }

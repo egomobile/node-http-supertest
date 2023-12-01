@@ -95,3 +95,38 @@ export function isNil(val: unknown): val is (null | undefined) {
     return typeof val === "undefined" ||
         val === null;
 }
+
+export function toSearchString(val: any): string {
+    val = toStringSafe(val)
+        .toLowerCase()
+        .split("ä").join("ae")
+        .split("ö").join("oe")
+        .split("ü").join("ue")
+        .split("ß").join("ss")
+        .split("\t").join("  ")
+        .split("\n").join(" ")
+        .split("\r").join("")
+        .trim();
+
+    return val;
+}
+
+export function toStringSafe(val: any): string {
+    if (isNil(val)) {
+        return "";
+    }
+
+    if (typeof val === "string") {
+        return val;
+    }
+
+    if (typeof val.toString === "function") {
+        return String(val.toString());
+    }
+
+    if (typeof val === "object") {
+        return JSON.stringify(val);
+    }
+
+    return String(val);
+}
