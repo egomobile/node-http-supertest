@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-supertest",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "Sets up common and powerful test event listener for @egomobile/http-server with supertest under the hood.",
     "main": "lib/index.js",
     "engines": {
