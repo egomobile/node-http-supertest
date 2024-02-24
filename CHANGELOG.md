@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-supertest)
 
+## 0.7.0
+
+- `npm update`s
+
 ## 0.6.0
 
 - add `onStatusUpdate` to [ISetupTestEventListenerOptions interface](https://egomobile.github.io/node-http-supertest/interfaces/ISetupTestEventListenerOptions.html)
