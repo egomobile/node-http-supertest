@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IHttpServer, ITestSession } from "@egomobile/http-server";
+import type { IHttpServer, ITestEventHandlerContext, ITestSession } from "@egomobile/http-server";
 import assert, { AssertionError } from "node:assert";
 import os from "node:os";
 import ora from "ora";
@@ -68,9 +68,63 @@ export interface ISetupTestEventListenerOptions {
      */
     itemPrefix?: any;
     /**
+     * Optional callback, which is invoked, when status of a test is updated.
+     *
+     * @param {ITestStatusUpdateContext} context The execution context.
+     */
+    onStatusUpdate?: (context: ITestStatusUpdateContext) => any;
+    /**
      * The underlying server to setup.
      */
     server: IHttpServer;
+}
+
+/**
+ * Execution context for an `ISetupTestEventListenerOptions.onStatusUpdate()` callback.
+ */
+export interface ITestStatusUpdateContext {
+    /**
+     * The underlying event handler execution context with information about the test.
+     */
+    context: ITestEventHandlerContext;
+    /**
+     * The error information, if `status` is `failed`.
+     */
+    error?: any;
+    /**
+     * The current status.
+     */
+    status: TestStatus;
+}
+
+/**
+ * List of test status values.
+ */
+export enum TestStatus {
+    /**
+     * Entered test event only, but did nothing else yet.
+     */
+    Entered = "entered",
+    /**
+     * This test has been failed.
+     */
+    Failed = "dailed",
+    /**
+     * The execution of the endpoint has been finished.
+     */
+    Finished = "finished",
+    /**
+     * This test has been passed successfully.
+     */
+    Passed = "passed",
+    /**
+     * The endpoint is running.
+     */
+    Running = "running",
+    /**
+     * Test has been skipped.
+     */
+    Skipped = "skipped",
 }
 
 /**
@@ -140,8 +194,24 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
 
     const currentSessions: Record<string, ISessionInfo> = {};
 
+    const onStatusUpdate = options.onStatusUpdate ?? (async () => {
+        // noop
+    });
+
+    if (typeof onStatusUpdate !== "function") {
+        throw new TypeError("options.onStatusUpdate must be of type function");
+    }
+
     server.on("test", async (context) => {
         const now = new Date();
+
+        const emitStatusUpdate = async (status: TestStatus, error?: any) => {
+            await onStatusUpdate({
+                context,
+                error,
+                status
+            });
+        };
 
         const {
             body,
@@ -194,6 +264,8 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             writeLine(`${groupPrefix}${group}`);
         }
 
+        await emitStatusUpdate(TestStatus.Entered);
+
         const spinner = ora({
             "prefixText": `${itemPrefix}`,
             stream,
@@ -206,6 +278,8 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             const shouldBeExecuted = await filter(context);
             if (!shouldBeExecuted) {
                 spinner.info(`[SKIPPED] ${baseText}`);
+
+                await emitStatusUpdate(TestStatus.Skipped);
 
                 return;
             }
@@ -221,8 +295,12 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             }
 
             start = new Date();
+            await emitStatusUpdate(TestStatus.Running);
+
             const response = await request.send(isNil(body) ? undefined : body);
+
             end = new Date();
+            await emitStatusUpdate(TestStatus.Finished);
 
             // check status code
             assert.strictEqual(
@@ -231,16 +309,19 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             );
 
             // headers
-            for (const [headerName, headerValue] of Object.entries<any>(response.headers)) {
-                const expectedHeaderValue = expectedHeaders[headerName];
-                if (!expectedHeaderValue) {
-                    continue;  // noting to check
-                }
+            for (const [expectedHeaderName, expectedHeaderValue] of Object.entries<any>(expectedHeaders)) {
+                const headerValue = response.headers[expectedHeaderName];
+                const headerValueType = typeof headerValue;
+
+                assert.strictEqual(
+                    headerValue, expectedHeaderValue,
+                    `Expected string value for header '${expectedHeaderName}', but got '${headerValueType}'`
+                );
 
                 if (typeof expectedHeaderValue === "string") {
                     assert.strictEqual(
                         headerValue, expectedHeaderValue,
-                        `Expected value '${expectedHeaderValue}' for header '${headerName}', but got '${headerValue}'`
+                        `Expected value '${expectedHeaderValue}' for header '${expectedHeaderName}', but got '${headerValue}'`
                     );
                 }
                 else {
@@ -248,7 +329,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
 
                     assert.strictEqual(
                         expectedHeaderValue.test(headerValue), true,
-                        `Value '${headerValue}' of header '${headerName}' does not match regex '${expectedHeaderValue.source}'`
+                        `Value '${headerValue}' of header '${expectedHeaderName}' does not match regex '${expectedHeaderValue.source}'`
                     );
                 }
             }
@@ -341,6 +422,8 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             }
 
             spinner.succeed(`${baseText} (${end.valueOf() - start.valueOf()}ms)`);
+
+            await emitStatusUpdate(TestStatus.Passed);
         }
         catch (error) {
             start = start ?? now;
@@ -349,6 +432,8 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
             spinner.fail(`[FAILED] ${baseText} (${end.valueOf() - start.valueOf()}ms): '${error}'`);
 
             await countFailure();
+
+            await emitStatusUpdate(TestStatus.Failed, error);
         }
         finally {
             if (isLast) {
