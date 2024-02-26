@@ -314,7 +314,7 @@ export function setupTestEventListener(options: ISetupTestEventListenerOptions) 
                 const headerValueType = typeof headerValue;
 
                 assert.strictEqual(
-                    headerValue, expectedHeaderValue,
+                    headerValueType, "string",
                     `Expected string value for header '${expectedHeaderName}', but got '${headerValueType}'`
                 );
 

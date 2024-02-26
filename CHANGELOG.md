@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-supertest)
 
-## 0.7.0
+## 0.7.1
 
 - `npm update`s
 
